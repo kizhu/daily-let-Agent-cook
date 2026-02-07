@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Daily Report · {{REPORT_DATE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fbfbfd;
+  --text-1: #1d1d1f;
+  --text-2: #6e6e73;
+  --text-3: #86868b;
+  --blue: #007AFF;
+  --green: #34C759;
+  --red: #FF3B30;
+  --glass: rgba(255,255,255,0.55);
+  --glass-border: rgba(255,255,255,0.3);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Background orbs ===== */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.2;
+  animation: float 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 { width: 400px; height: 400px; background: #007AFF; top: -8%; right: -3%; }
+.orb-2 { width: 350px; height: 350px; background: #AF52DE; bottom: -5%; left: -5%; animation-delay: -4s; }
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* ===== Task Feeds (left + right edges) ===== */
+.task-rail {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: 360px;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0.2;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.task-rail-left { left: 0; }
+.task-rail-right { right: 0; direction: rtl; }
+
+.task-rail-inner {
+  animation: scrollUp 50s linear infinite;
+  padding: 12px 0;
+}
+
+.task-rail-right .task-rail-inner {
+  animation: scrollDown 55s linear infinite;
+}
+
+@keyframes scrollUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes scrollDown {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+
+.task-line {
+  padding: 2px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  line-height: 1.8;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: ltr;
+}
+
+.task-rail-right .task-line { text-align: right; }
+
+.task-line .t { color: rgba(0,0,0,0.08); margin-right: 3px; }
+.task-line .a { color: #90c4f0; }
+.task-line .f { color: #c4a5db; }
+.task-line .s { color: #8fd49c; }
+.task-line .p { color: #e0b499; }
+.task-line .i { color: #b0b0b8; }
+
+/* ===== Main Page ===== */
+.page {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 48px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+:root {
+  --gap-1: 16px;
+  --gap-2: 14px;
+  --gap-3: 14px;
+  --gap-4: 20px;
+}
+
+.row-1 { margin-bottom: var(--gap-1); }
+.row-2 { margin-bottom: var(--gap-2); }
+.row-3 { margin-bottom: var(--gap-3); }
+.row-4 { margin-bottom: var(--gap-4); }
+
+/* --- Hero --- */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px 24px;
+  opacity: 0; transform: translateY(12px);
+  animation: fadeIn 1s var(--ease) 0.1s forwards;
+}
+
+.hero-left { flex: 1; }
+
+.hero-right {
+  flex-shrink: 0;
+  text-align: right;
+  padding-left: 24px;
+}
+
+.hero-date { font-size: 13px; font-weight: 500; color: var(--text-3); margin-bottom: 4px; }
+
+.hero-collab {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--text-2);
+  background: linear-gradient(135deg, rgba(0,122,255,0.08), rgba(175,82,222,0.08));
+  padding: 2px 14px; border-radius: 100px;
+}
+
+.hero-headline {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.hero-subline { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+/* --- Metrics --- */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  opacity: 0; transform: translateY(12px);
+  animation: fadeIn 0.9s var(--ease) 0.2s forwards;
+}
+
+.metric-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 8px 16px;
+  text-align: center;
+  transition: transform 0.3s var(--ease);
+}
+
+.metric-card:hover { transform: translateY(-2px); }
+.metric-value { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin-bottom: 2px; }
+.metric-unit { font-size: 13px; font-weight: 500; color: var(--text-3); }
+.metric-label { font-size: 11px; font-weight: 500; color: var(--text-3); }
+
+/* --- Achievements (3 horizontal) --- */
+.achievements {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  opacity: 0; transform: translateY(12px);
+  animation: fadeIn 0.9s var(--ease) 0.3s forwards;
+}
+
+.ach-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 12px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.ach-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2.5px;
+  background: linear-gradient(90deg, #007AFF, #5856D6, #AF52DE);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+
+.ach-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+.ach-card:hover::before { opacity: 1; }
+
+.ach-tag {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  color: var(--blue); background: rgba(0,122,255,0.08);
+  padding: 2px 8px; border-radius: 100px; margin-bottom: 8px;
+}
+
+.ach-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; line-height: 1.3; }
+.ach-desc { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-bottom: 6px; }
+
+.ach-impact {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; color: var(--green);
+  background: rgba(52,199,89,0.08); padding: 3px 10px; border-radius: 100px;
+}
+
+.ach-impact svg { width: 12px; height: 12px; }
+
+/* --- Insights Row --- */
+.insights-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  opacity: 0; transform: translateY(12px);
+  animation: fadeIn 0.9s var(--ease) 0.4s forwards;
+}
+
+.insight-card {
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.insight-card.good {
+  background: rgba(52,199,89,0.05); border: 1px solid rgba(52,199,89,0.1);
+}
+
+.insight-card.bad {
+  background: rgba(255,59,48,0.04); border: 1px solid rgba(255,59,48,0.08);
+}
+
+.insight-card.prompt {
+  background: rgba(0,122,255,0.04); border: 1px solid rgba(0,122,255,0.1);
+}
+
+.insight-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+
+.insight-label.gl { color: var(--green); }
+.insight-label.bl { color: var(--red); }
+.insight-label.pl { color: var(--blue); }
+
+.insight-text { color: var(--text-2); }
+.insight-text strong { color: var(--text-1); font-weight: 600; }
+
+.prompt-quote {
+  font-size: 11px; font-style: italic; color: var(--text-1);
+  padding: 6px 10px; background: rgba(0,122,255,0.04);
+  border-left: 2px solid var(--blue); border-radius: 4px;
+  margin-bottom: 6px; line-height: 1.5;
+}
+
+.prompt-stars { color: #FF9F0A; font-size: 10px; letter-spacing: 1px; margin-bottom: 2px; }
+
+/* --- Demos (2 side by side) --- */
+.demos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex-shrink: 0;
+  opacity: 0; transform: translateY(12px);
+  animation: fadeIn 0.9s var(--ease) 0.5s forwards;
+}
+
+.demo-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #1a1a2e;
+  transition: transform 0.3s var(--ease);
+}
+
+.demo-card:hover { transform: scale(1.003); }
+
+.demo-topbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; background: rgba(255,255,255,0.05); flex-shrink: 0;
+}
+
+.demo-dots { display: flex; gap: 4px; }
+.demo-dot { width: 8px; height: 8px; border-radius: 50%; }
+.demo-dot-r { background: #ff5f57; }
+.demo-dot-y { background: #febc2e; }
+.demo-dot-g { background: #28c840; }
+
+.demo-url {
+  flex: 1; background: rgba(255,255,255,0.06); border-radius: 4px;
+  padding: 2px 8px; font-size: 10px; color: rgba(255,255,255,0.3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.demo-iframe-wrap {
+  aspect-ratio: 16 / 9; background: #0d0d1a; overflow: hidden;
+}
+
+.demo-iframe-wrap iframe {
+  border: none; transform-origin: 0 0;
+  width: 200%; height: 200%; transform: scale(0.5);
+}
+
+.demo-info {
+  padding: 8px 14px; display: flex; justify-content: space-between;
+  align-items: center; flex-shrink: 0;
+}
+
+.demo-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85); }
+.demo-desc-text { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 1px; }
+.demo-tags { display: flex; gap: 4px; }
+.demo-tag {
+  font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 100px;
+}
+
+/* --- No demos fallback --- */
+.no-demos {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 24px;
+  color: var(--text-3);
+  font-size: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+}
+
+/* --- Footer line --- */
+.footer-line {
+  text-align: center; flex-shrink: 0;
+  font-size: 10px; color: var(--text-3);
+  margin-top: 8px;
+  opacity: 0; animation: fadeIn 0.9s var(--ease) 0.6s forwards;
+}
+
+.footer-line a { color: var(--blue); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- Task rails (background decoration) -->
+<div class="task-rail task-rail-left"><div class="task-rail-inner" id="railLeft"></div></div>
+<div class="task-rail task-rail-right"><div class="task-rail-inner" id="railRight"></div></div>
+
+<div class="page">
+
+  <!-- Row 1: Hero -->
+  <section class="hero row-1">
+    <div class="hero-left">
+      <h1 class="hero-headline">{{REPORT_TITLE}}</h1>
+      <p class="hero-subline">{{REPORT_SUBTITLE}}</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-date">{{REPORT_DATE}}</div>
+      <div class="hero-collab">{{USER_NAME}} × {{AGENT_NAME}}</div>
+    </div>
+  </section>
+
+  <!-- Row 2: Metrics -->
+  <section class="metrics row-2">
+    <div class="metric-card">
+      <div class="metric-value"><span class="counter" data-target="{{METRIC_1_VALUE}}">0</span></div>
+      <div class="metric-label">{{METRIC_1_LABEL}}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value"><span class="counter" data-target="{{METRIC_2_VALUE}}">0</span><span class="metric-unit">{{METRIC_2_UNIT}}</span></div>
+      <div class="metric-label">{{METRIC_2_LABEL}}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value"><span class="counter" data-target="{{METRIC_3_VALUE}}">0</span></div>
+      <div class="metric-label">{{METRIC_3_LABEL}}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value"><span class="counter" data-target="{{METRIC_4_VALUE}}">0</span></div>
+      <div class="metric-label">{{METRIC_4_LABEL}}</div>
+    </div>
+  </section>
+
+  <!-- Row 3: Achievements -->
+  <section class="achievements row-3">
+    <div class="ach-card">
+      <span class="ach-tag">{{ACH_1_TAG}}</span>
+      <h3 class="ach-title">{{ACH_1_TITLE}}</h3>
+      <p class="ach-desc">{{ACH_1_DESC}}</p>
+      <div class="ach-impact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        {{ACH_1_IMPACT}}
+      </div>
+    </div>
+    <div class="ach-card">
+      <span class="ach-tag">{{ACH_2_TAG}}</span>
+      <h3 class="ach-title">{{ACH_2_TITLE}}</h3>
+      <p class="ach-desc">{{ACH_2_DESC}}</p>
+      <div class="ach-impact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        {{ACH_2_IMPACT}}
+      </div>
+    </div>
+    <div class="ach-card">
+      <span class="ach-tag">{{ACH_3_TAG}}</span>
+      <h3 class="ach-title">{{ACH_3_TITLE}}</h3>
+      <p class="ach-desc">{{ACH_3_DESC}}</p>
+      <div class="ach-impact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        {{ACH_3_IMPACT}}
+      </div>
+    </div>
+  </section>
+
+  <!-- Row 4: Insights -->
+  <section class="insights-row row-4">
+    <div class="insight-card good">
+      <div class="insight-label gl">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        Good Practice
+      </div>
+      <div class="insight-text">{{GOOD_PRACTICE}}</div>
+    </div>
+    <div class="insight-card bad">
+      <div class="insight-label bl">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Bad Practice
+      </div>
+      <div class="insight-text">{{BAD_PRACTICE}}</div>
+    </div>
+    <div class="insight-card prompt">
+      <div class="insight-label pl">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Best Prompt
+      </div>
+      <div class="prompt-quote">"{{BEST_PROMPT}}"</div>
+      <div class="prompt-stars">★★★★★</div>
+    </div>
+  </section>
+
+  <!-- Row 5: Demos -->
+  <!--
+    DEMO SECTION INSTRUCTIONS:
+    - If demos are available, use the demo-card structure below (up to 2 demos)
+    - If NO demos are available, replace the demos section content with:
+      <div class="no-demos">No HTML demos to showcase today</div>
+    - For each demo, set the iframe src to the relative path from this HTML file to the demo
+  -->
+  <section class="demos">
+    <!-- Demo 1 -->
+    <div class="demo-card">
+      <div class="demo-topbar">
+        <div class="demo-dots"><div class="demo-dot demo-dot-r"></div><div class="demo-dot demo-dot-y"></div><div class="demo-dot demo-dot-g"></div></div>
+        <div class="demo-url">{{DEMO_1_URL}}</div>
+      </div>
+      <div class="demo-iframe-wrap">
+        <iframe class="scaled" src="{{DEMO_1_SRC}}" loading="lazy" sandbox="allow-scripts allow-same-origin" style="pointer-events:none;"></iframe>
+      </div>
+      <div class="demo-info">
+        <div>
+          <div class="demo-name">{{DEMO_1_NAME}}</div>
+          <div class="demo-desc-text">{{DEMO_1_DESC}}</div>
+        </div>
+        <div class="demo-tags">{{DEMO_1_TAGS}}</div>
+      </div>
+    </div>
+    <!-- Demo 2 -->
+    <div class="demo-card">
+      <div class="demo-topbar">
+        <div class="demo-dots"><div class="demo-dot demo-dot-r"></div><div class="demo-dot demo-dot-y"></div><div class="demo-dot demo-dot-g"></div></div>
+        <div class="demo-url">{{DEMO_2_URL}}</div>
+      </div>
+      <div class="demo-iframe-wrap">
+        <iframe class="scaled" src="{{DEMO_2_SRC}}" loading="lazy" sandbox="allow-scripts allow-same-origin" style="pointer-events:none;"></iframe>
+      </div>
+      <div class="demo-info">
+        <div>
+          <div class="demo-name">{{DEMO_2_NAME}}</div>
+          <div class="demo-desc-text">{{DEMO_2_DESC}}</div>
+        </div>
+        <div class="demo-tags">{{DEMO_2_TAGS}}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div class="footer-line">{{FOOTER_TEXT}}</div>
+
+</div>
+
+<script>
+// Counter animation
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  if (isNaN(target)) return;
+  const duration = 1800, start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target).toLocaleString();
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  setTimeout(() => requestAnimationFrame(tick), 400);
+}
+document.querySelectorAll('.counter').forEach(animateCounter);
+
+// Task rails — replace {{TASK_RAIL_DATA}} with a JS array of task objects
+// Format: { t: 'HH:MM', parts: [['className','text'], ...] }
+// Classes: a=action(blue), f=file(purple), s=success(green), p=api(orange), i=info(gray)
+const tasks = {{TASK_RAIL_DATA}};
+
+function fillRail(id) {
+  const el = document.getElementById(id);
+  if (!tasks || !tasks.length) return;
+  for (let r = 0; r < 2; r++) {
+    tasks.forEach(t => {
+      const d = document.createElement('div');
+      d.className = 'task-line';
+      let h = `<span class="t">${t.t}</span>`;
+      t.parts.forEach(p => h += `<span class="${p[0]}">${p[1]}</span>`);
+      d.innerHTML = h;
+      el.appendChild(d);
+    });
+  }
+}
+fillRail('railLeft');
+fillRail('railRight');
+</script>
+</body>
+</html>
